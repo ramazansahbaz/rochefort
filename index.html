@@ -131,9 +131,9 @@
         <button class="btn-zoom" onclick="toggleZoom('conteneur-diff')">🔍 Activer/Désactiver la Loupe</button>
 
         <div id="conteneur-diff" class="zoomable" style="display: flex; flex-direction: column; align-items: center;">
-            <div class="diff-img-box"><img src="img/5_différences_base.jpeg"></div>
+            <div class="diff-img-box"><img src="img/5_differences_base.jpeg"></div>
             <div id="diff-clickable-zone" class="diff-img-box" onclick="handleDiffClick(event)" style="cursor: crosshair;">
-                <img src="img/5_différences.jpeg">
+                <img src="img/5_differences.jpeg">
                 <div id="found-markers"></div>
             </div>
         </div>
@@ -150,7 +150,7 @@
         <h2>Énigme 5 : L'Apparition</h2>
         <button class="btn-zoom" onclick="toggleZoom('img-apparition')">🔍 Activer/Désactiver la Loupe</button>
 
-        <img id="img-apparition" src="img/observation_comparée.jpeg" class="enigma-img zoomable" alt="Observation">
+        <img id="img-apparition" src="img/observation_comparee.jpeg" class="enigma-img zoomable" alt="Observation">
         <p>Identifiez l'entité cachée.</p>
         <input type="text" id="ans-5" placeholder="Nommez l'entité" onkeypress="if(event.key === 'Enter') checkAnswer(5, 'FANTOME')">
         <br><button class="btn-action" onclick="checkAnswer(5, 'FANTOME')">Valider</button>
