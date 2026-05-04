@@ -113,6 +113,8 @@
         <p>Observez bien les environs. Sur quelle route sommes-nous ?</p>
         <input type="text" id="ans-1" placeholder="Ex: A54" onkeypress="if(event.key === 'Enter') checkAnswer(1, 'E411')">
         <br><button class="btn-action" onclick="checkAnswer(1, 'E411')">Valider</button>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
     <div id="step-2" class="step hidden">
@@ -124,6 +126,8 @@
         <input type="text" id="letter" maxlength="1" style="width: 50px; text-align: center; text-transform: uppercase;" onkeypress="if(event.key === 'Enter') guessLetter()">
         <button class="btn-action" onclick="guessLetter()">Proposer</button>
         <p id="mauvaises-lettres" style="color: #ff3333; font-weight: bold;"></p>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
     <div id="step-3" class="step hidden">
@@ -138,13 +142,18 @@
             </div>
         </div>
         <div class="diff-status">Anomalies : <span id="diff-count">0</span> / 5</div>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
     <div id="step-4" class="step hidden">
         <h2>Énigme 4 : Le Sceau Fracturé</h2>
         <p>Reconstituez ce symbole pour briser la magie qui bloque le passage.</p>
         <div id="puzzle-board" style="width: 300px; height: 300px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); border: 2px solid #444; background: #000;"></div>
-        <br> <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerPuzzle()">Forcer le passage (-15 min)</button>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-15 min)</button>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
 
@@ -156,6 +165,8 @@
         <p>Identifiez l'entité cachée.</p>
         <input type="text" id="ans-5" placeholder="Nommez l'entité" onkeypress="if(event.key === 'Enter') checkAnswer(5, 'FANTOME')">
         <br><button class="btn-action" onclick="checkAnswer(5, 'FANTOME')">Valider</button>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
     <div id="step-6" class="step hidden">
@@ -173,6 +184,8 @@
             <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils devaient creuser leurs propres tombes à mains nues</button>
             <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils étaient livrés en pâture aux ombres de la forêt</button>
         </div>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
     <div id="step-7" class="step hidden">
@@ -182,6 +195,8 @@
         <br><br>
         <button class="btn-action" onclick="verifierPoids()">Soumettre le poids</button>
         <p id="poids-feedback" style="color: #ff3333; font-weight: bold; min-height: 20px; margin-top: 15px;"></p>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
     <div id="step-8" class="step hidden">
@@ -190,6 +205,8 @@
         <h3 id="pendu-mot-clavier" style="letter-spacing: 5px; font-size: 2rem; margin: 20px 0;">_ _ _ _ _ _ _</h3>
         <div id="pendu-clavier" style="max-width: 400px; margin: 20px auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
         </div>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
     <div id="step-9" class="step hidden">
@@ -199,6 +216,8 @@
             <button class="btn-action" style="padding: 15px 40px;" onclick="verifierVraiFaux(this, false)">VRAI</button>
             <button class="btn-action" style="padding: 15px 40px;" onclick="verifierVraiFaux(this, true)">FAUX</button>
         </div>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
     <div id="step-10" class="step hidden">
@@ -238,6 +257,8 @@
         </div>
         <br>
         <button class="btn-action" onclick="verifierTexteTrou()">Valider l'incantation</button>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
     <div id="step-11" class="step hidden">
@@ -249,9 +270,12 @@
         <input type="text" id="anagramme-input" placeholder="Bloqué (Trouvez les paires)" style="padding: 10px; font-size: 1.2rem; text-transform: uppercase; text-align: center; background: #222; color: white; border: 1px solid #555;" disabled>
         <br><br>
         <button class="btn-action" onclick="verifierAnagrammeMemo()">Restaurer le mot</button>
+        <br>
+        <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerEnigme()">Forcer le passage (-8 min)</button>
     </div>
 
     <button class="btn-action" style="margin-top: 30px;" onclick="retourAuRadar()">Retourner au Radar</button>
+    
 </div>
 
 <script>
@@ -287,9 +311,10 @@
     demarrerSuiviGPS()
 
     // --- VARIABLES GLOBALES ---
-    let currentStep = 1;
+    let currentStep = 12;
     let map, marker;
     let timeLeft = 110 * 60;
+    let skipsUsed = 0;
     let chronoInterval;
 
     // --- COORDONNÉES GPS POUR LES 12 ÉNIGMES ---
@@ -300,13 +325,13 @@
         [50.160859606125626, 5.221676898807207],  // Étape 3
         [50.15664023838309, 5.21920491488863],    // Étape 4 (Le Taquin)
         [50.1581026093535, 5.222416689623276],    // Étape 5
-        [50.158500, 5.220500], // Étape 6 : Proche de l'église
-        [50.157500, 5.224000], // Étape 7 : Vers le Château Comtal
-        [50.155500, 5.223000], // Étape 8 : Ruelles sud
-        [50.159000, 5.225000], // Étape 9 : Hauteurs de la ville (Prévu pour la suite)
-        [50.161000, 5.218000], // Étape 10 : Quartier nord
-        [50.162000, 5.220000], // Étape 11 : Parc
-        [50.157000, 5.217000]  // Étape 12 : Le dernier rempart
+        [50.15849938891408, 5.220399011107516], // Étape 6 : Proche de l'église
+        [50.157492953241395, 5.223463422320391], // Étape 7 : Vers le Château Comtal
+        [50.15546530394299, 5.222185218292892], // Étape 8 : Ruelles sud
+        [50.15902792449445, 5.22502781913811], // Étape 9 : Hauteurs de la ville (Prévu pour la suite)
+        [50.16087307514028, 5.218866871169713], // Étape 10 : Quartier nord
+        [50.161965606040106, 5.219871251667747], // Étape 11 : Parc
+        [50.156965602444714, 5.216817607486175]  // Étape 12 : Le dernier rempart
     ];
 
     // --- FONCTION DE ZOOM ---
@@ -366,7 +391,7 @@
         if (map) return;
 
         // On crée la carte
-        map = L.map('map').setView(enigmasLocations[1], 17);
+        map = L.map('map').setView(enigmasLocations[12], 17);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 20
@@ -489,21 +514,25 @@
         currentStep++;
 
         if (currentStep === 12) {
-            alert("Le dernier sceau est brisé ! Mais le Comte s'enfuit vers son repaire... Rattrapez-le avant qu'il ne disparaisse !");
+            // C'EST ICI QUE LA COURSE COMMENCE
+            alert("ALERTE : Le Comte s'enfuit ! Rattrapez-le au point indiqué sur votre radar en moins de 5 minutes !");
 
-            // On cache les énigmes et on affiche la carte
+            // 1. On retourne sur la carte immédiatement
             retourAuRadar();
 
-            // On lance le chrono de 5 minutes pour aller au point 12 (Zone Rouge)
-            let loc12 = enigmasLocations[12];
-            lancerNavigationChronometree(loc12[0], loc12[1], 5);
+            // 2. On récupère les coordonnées du point 12
+            let destination = enigmasLocations[12];
 
-            // (On a supprimé la redirection vers la victoire ici, car c'est la fonction
-            // verifierArrivee() qui te donnera la victoire quand tu seras à moins de 50m !)
+            // 3. On lance la navigation avec le chrono de 5 minutes (300 secondes)
+            lancerNavigationChronometree(destination[0], destination[1], 5);
 
+        } else if (currentStep > 12) {
+            // Si le joueur entre dans la zone du point 12 avant la fin des 5 min
+            // Il gagne directement !
+            window.location.href = "victoire.html?time=" + timeLeft + "&skips=" + skipsUsed;
         } else {
-            alert("Bonne réponse ! Le sceau est brisé... L'entité se déplace.");
-            placerMarqueur();
+            // Cas normal pour les autres étapes
+            alert("Félicitations ! Dirigez-vous vers le prochain point.");
             retourAuRadar();
         }
     }
@@ -653,27 +682,21 @@
     }
 
     // --- FONCTION POUR PASSER LE PUZZLE (MALUS 15 MIN) ---
-    function passerPuzzle() {
-        // 1. On demande confirmation au joueur (Sécurité anti-misclick)
-        let choix = confirm("Êtes-vous sûr de vouloir forcer le passage ? Cela vous coûtera 15 minutes de pénalité sur votre temps global !");
-
+    // --- FONCTION POUR PASSER N'IMPORTE QUELLE ÉNIGME (MALUS 8 MIN) ---
+    function passerEnigme() {
+        let choix = confirm("Êtes-vous sûr de vouloir forcer le passage ? Cela vous coûtera 8 minutes de pénalité !");
         if (choix) {
-            // 2. On retire 15 minutes (15 * 60 = 900 secondes) au chronomètre global
-            timeLeft -= 900;
+            timeLeft -= 480; // -8 minutes
+            skipsUsed++;     // Incrémente le compteur pour le score final
 
-            // 3. On vérifie si cette pénalité ne tue pas le joueur (Chrono à zéro)
             if (timeLeft <= 0) {
                 timeLeft = 0;
-                alert("Le temps est écoulé... Le Comte s'est évaporé dans la nature. Vous avez échoué.");
-                window.location.href = "defaite.html"; // Met ici ton lien de défaite si tu en as un
-                return; // On arrête tout
+                alert("Le temps est écoulé... Le Comte s'est évaporé.");
+                window.location.href = "php/defaite.html";
+                return;
             }
-
-            // 4. Si le joueur a survécu à la pénalité, on valide l'énigme
-            alert("Vous avez utilisé la force brute pour briser le sceau ! Vous perdez 15 minutes, mais le passage est ouvert.");
-
-            // On déclenche la réussite de l'énigme pour passer à la carte suivante
-            enigmeReussie();
+            alert("Vous avez utilisé la force brute ! Passage ouvert.");
+            enigmeReussie(); // Passe à l'étape suivante
         }
     }
     // --- LOGIQUE QCM (STEP 6) ---
@@ -1039,62 +1062,54 @@
 
                 // ACTION DE DÉFAITE IMMÉDIATE
                 alert("LE COMTE S'EST ÉCHAPPÉ ! Vous n'avez pas pu récupérer le dernier sceau à temps. La mission est un échec.");
-                window.location.href = "defaite.html";
+                window.location.href = "php/defaite.html";
             }
         }, 1000);
     }
 
-    // 2. Vérification de la distance
-    function verifierArrivee(lat, lon) {
-        if (navigationEnCours && cibleLat && cibleLon) {
-            // Utilisation de Leaflet pour calculer la distance entre le joueur et la cible
-            let posJoueur = L.latLng(lat, lon);
-            let posCible = L.latLng(cibleLat, cibleLon);
-            let dist = posJoueur.distanceTo(posCible);
+    function calculerDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // Rayon de la Terre en mètres
+        const phi1 = lat1 * Math.PI / 180;
+        const phi2 = lat2 * Math.PI / 180;
+        const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+        const deltaLambda = (lon2 - lon1) * Math.PI / 180;
 
-            if (dist < 50) { // Rayon de 50 mètres
-                navigationEnCours = false;
-                if (timerDeplacement) clearInterval(timerDeplacement);
-                alert("ZONE ATTEINTE ! Vous avez intercepté le Comte avant qu'il ne disparaisse !");
-                window.location.href = "php/victoire.html";
+        const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+            Math.cos(phi1) * Math.cos(phi2) *
+            Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c; // Distance en mètres
+    }
+
+    // 2. Vérification de la distance
+    function verifierArrivee(lat, lng) {
+        let target = enigmasLocations[currentStep];
+        let distance = calculerDistance(lat, lng, target[0], target[1]);
+
+        if (distance < 20) { // Si à moins de 20 mètres
+            if (currentStep === 12) {
+                // VICTOIRE IMMÉDIATE dès qu'il entre dans la zone
+                alert("VOUS L'AVEZ RATTRAPÉ ! Le Comte est neutralisé !");
+                window.location.href = "victoire.html?time=" + timeLeft + "&skips=" + skipsUsed;
+            } else {
+                // Pour les autres étapes, on affiche l'énigme normalement
+                lancerEnigme();
             }
         }
     }
-
-    // 3. La grosse pénalité (-20 minutes)
-    function appliquerGrossePenalite() {
-        alert("TROP TARD ! Le Comte a pris de l'avance. Pénalité de 20 minutes !");
-
-        // 1. Appliquer la pénalité au temps global
-        timeLeft -= 1200; // -20 minutes
-
-        // 2. Vérifier si le joueur a perdu
-        if (timeLeft <= 0) {
-            timeLeft = 0;
-            alert("Le temps est écoulé... Le Comte s'est évaporé dans la nature. Vous avez échoué.");
-            window.location.href = "defaite.html"; // Redirige vers une page de défaite
+    function verifierFinale(estCorrect) {
+        if (estCorrect) {
+            alert("Le pieu s'enfonce dans le cœur du Comte ! Rochefort est libérée !");
+            // On envoie le temps restant et le nombre de skips à la page victoire
+            window.location.href = "victoire.html?time=" + timeLeft + "&skips=" + skipsUsed;
         } else {
-            // Le joueur est en retard mais peut encore finir
-            alert("Il vous reste très peu de temps pour atteindre la zone avant la fin du chrono global ! Dépêchez-vous !");
-
-            // On cache le petit timer de l'étape car il est fini
-            let navUI = document.getElementById('navigation-ui');
-            if (navUI) navUI.classList.add('hidden');
-
-            navigationEnCours = false;
+            alert("L'acier ne lui fait rien ! Il contre-attaque ! (-10 min)");
+            timeLeft -= 600;
+            if (timeLeft <= 0) {
+                window.location.href = "php/defaite.html";
+            }
         }
-    }
-
-    function fermerModalSceau() {
-        // NOUVEAU : On force la disparition de la modale
-        let modal = document.getElementById('modal-sceau');
-        if (modal) modal.style.display = 'none';
-
-        let navUI = document.getElementById('navigation-ui');
-        if (navUI) navUI.classList.add('hidden');
-
-        let radar = document.getElementById('radar-container');
-        if (radar) radar.classList.remove('hidden');
     }
 </script>
 </body>
