@@ -258,6 +258,8 @@
                     } else {
                         userMarker.setLatLng([userLat, userLon]);
                     }
+                    // À ajouter dans demarrerSuiviGPS (Partie 1)
+                    verifierArrivee(userLat, userLon);
                 }
             }, error => {
                 console.error("Erreur GPS:", error);
@@ -882,11 +884,10 @@
         }
     }
     // --- VARIABLES DE NAVIGATION ---
-
+    // --- VARIABLES DE NAVIGATION ---
     let timerDeplacement;
     let tempsRestantDeplacement;
     let cibleLat, cibleLon;
-    let possedeSceau = false;
     let navigationEnCours = false;
 
     // 1. Fonction pour lancer un trajet chronométré
@@ -896,15 +897,12 @@
         tempsRestantDeplacement = minutes * 60;
         navigationEnCours = true;
 
-        // 1. On affiche l'UI du chrono d'étape
         let navUI = document.getElementById('navigation-ui');
         if (navUI) navUI.classList.remove('hidden');
 
-        // 2. VISUEL : On dessine la zone rouge sur la carte
-        // On retire d'abord l'ancien marqueur s'il existe
         if (marker) map.removeLayer(marker);
 
-        // On ajoute un cercle rouge de 50 mètres de rayon
+        // Zone rouge de 50m
         L.circle([lat, lon], {
             color: '#ff3333',
             fillColor: '#ff3333',
@@ -912,15 +910,12 @@
             radius: 50
         }).addTo(map);
 
-        // On ajoute un marqueur spécial "Arrivée"
         marker = L.marker([lat, lon]).addTo(map)
             .bindPopup("<b>REPAIRE DU COMTE</b><br>Vite, entrez dans la zone !")
             .openPopup();
 
-        // On centre la carte pour que le joueur voie où il doit aller
         map.setView([lat, lon], 16);
 
-        // 3. Gestion du chrono (ton code existant)
         if (timerDeplacement) clearInterval(timerDeplacement);
         timerDeplacement = setInterval(() => {
             tempsRestantDeplacement--;
@@ -931,69 +926,54 @@
                 display.innerText = (min < 10 ? "0" : "") + min + ":" + (sec < 10 ? "0" : "") + sec;
             }
 
-            // Dans le setInterval de lancerNavigationChronometree :
             if (tempsRestantDeplacement <= 0) {
                 clearInterval(timerDeplacement);
-                timerDeplacement = null;
-
-                // ACTION DE DÉFAITE IMMÉDIATE
-                alert("LE COMTE S'EST ÉCHAPPÉ ! Vous n'avez pas pu récupérer le dernier sceau à temps. La mission est un échec.");
+                alert("LE COMTE S'EST ÉCHAPPÉ ! Échec de la mission.");
                 window.location.href = "defaite.html";
             }
         }, 1000);
     }
 
-    // 2. Vérification de la distance
+    // 2. Vérification de l'arrivée (Correction pour utiliser Leaflet)
     function verifierArrivee(lat, lon) {
         if (navigationEnCours && cibleLat && cibleLon) {
-            let dist = calculerDistance(lat, lon, cibleLat, cibleLon);
+            // On utilise la fonction de distance de Leaflet
+            let pJoueur = L.latLng(lat, lon);
+            let pCible = L.latLng(cibleLat, cibleLon);
+            let dist = pJoueur.distanceTo(pCible);
 
-            // Si le joueur entre dans le rayon de 50m autour du Château (Zone Rouge)
             if (dist < 50) {
                 navigationEnCours = false;
-                if (timerDeplacement) clearInterval(timerDeplacement); // On arrête le chrono d'étape
-
-                alert("ZONE ATTEINTE ! Vous avez intercepté le Comte et récupéré le dernier sceau !");
-                window.location.href = "victoire.html";
+                if (timerDeplacement) clearInterval(timerDeplacement);
+                alert("ZONE ATTEINTE ! Vous avez intercepté le Comte !");
+                window.location.href = "php/victoire.html";
             }
         }
     }
 
-    // 3. La grosse pénalité (-20 minutes)
+    // IMPORTANT : Il faut modifier ta fonction demarrerSuiviGPS (dans la partie 1)
+    // pour qu'elle appelle verifierArrivee(userLat, userLon) à chaque mise à jour !
+
     function appliquerGrossePenalite() {
-        alert("TROP TARD ! Le Comte a pris de l'avance. Pénalité de 20 minutes !");
-
-        // 1. Appliquer la pénalité au temps global
-        timeLeft -= 1200; // -20 minutes
-
-        // 2. Vérifier si le joueur a perdu
+        alert("TROP TARD ! Pénalité de 20 minutes !");
+        timeLeft -= 1200;
         if (timeLeft <= 0) {
-            timeLeft = 0;
-            alert("Le temps est écoulé... Le Comte s'est évaporé dans la nature. Vous avez échoué.");
-            window.location.href = "defaite.html"; // Redirige vers une page de défaite
-        } else {
-            // Le joueur est en retard mais peut encore finir
-            alert("Il vous reste très peu de temps pour atteindre la zone avant la fin du chrono global ! Dépêchez-vous !");
-
-            // On cache le petit timer de l'étape car il est fini
-            let navUI = document.getElementById('navigation-ui');
-            if (navUI) navUI.classList.add('hidden');
-
-            navigationEnCours = false;
+            window.location.href = "defaite.html";
         }
     }
 
     function fermerModalSceau() {
-        // NOUVEAU : On force la disparition de la modale
         let modal = document.getElementById('modal-sceau');
         if (modal) modal.style.display = 'none';
-
         let navUI = document.getElementById('navigation-ui');
         if (navUI) navUI.classList.add('hidden');
-
         let radar = document.getElementById('radar-container');
         if (radar) radar.classList.remove('hidden');
     }
+
+</script>
+</body>
+</html>
 
 </script>
 </body>
