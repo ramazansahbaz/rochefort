@@ -141,10 +141,12 @@
     </div>
 
     <div id="step-4" class="step hidden">
-        <h2>Énigme 4 : Le Sceau Brisé</h2>
+        <h2>Énigme 4 : Le Sceau Fracturé</h2>
+        <p>Reconstituez ce symbole pour briser la magie qui bloque le passage.</p>
         <div id="puzzle-board" style="width: 300px; height: 300px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); border: 2px solid #444; background: #000;"></div>
-        <br><button class="btn-action" onclick="retourAuRadar()">Fuir (Debug)</button>
+        <br> <button class="btn-action" style="background-color: darkred; border-color: red; margin-top: 15px;" onclick="passerPuzzle()">Forcer le passage (-15 min)</button>
     </div>
+
 
     <div id="step-5" class="step hidden">
         <h2>Énigme 5 : L'Apparition</h2>
@@ -428,61 +430,58 @@
     }
 
     function lancerEnigme(step) {
-        // 1. On force la disparition de la carte (écrase le bug d'affichage)
+        // 1. On cache le radar
         let radar = document.getElementById('radar-container');
         radar.classList.add('hidden');
-        radar.style.display = 'none'; // <-- LA CORRECTION EST ICI
+        radar.style.display = 'none';
 
-        // 2. On affiche le plateau de jeu
+        // 2. On affiche le plateau de jeu et on FORCE le display à block
         let gameBoard = document.getElementById('game-board');
         gameBoard.classList.remove('hidden');
         gameBoard.style.display = 'block';
 
-        // 3. On cache toutes les énigmes par défaut
-        document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
+        // 3. On cache toutes les étapes à l'intérieur pour n'afficher que la bonne
+        document.querySelectorAll('.step').forEach(s => {
+            s.classList.add('hidden');
+        });
 
-        // 4. On affiche l'énigme cible
         const target = document.getElementById('step-' + step);
         if (target) {
             target.classList.remove('hidden');
 
-            // Initialisations spécifiques aux énigmes
+            // Initialisations spéciales
             if (step === 2) initPendu();
             if (step === 4) initPuzzle();
             if (step === 8) initPenduClavier();
             if (step === 11) initMemoAnagramme();
         } else {
-            alert("Le lieu " + step + " résonne d'une magie ancienne... (Validation automatique)");
             enigmeReussie();
         }
 
-        // 5. On remonte tout en haut de la page (Donne l'effet "Rafraîchissement")
         window.scrollTo(0, 0);
     }
 
     function retourAuRadar() {
-        // 1. On force la disparition du plateau d'énigmes
+        // 1. On cache le plateau d'énigmes et on FORCE le display à none
         let gameBoard = document.getElementById('game-board');
         gameBoard.classList.add('hidden');
-        gameBoard.style.display = 'none'; // <-- LA CORRECTION EST LÀ !
+        gameBoard.style.display = 'none'; // <-- C'est cette ligne qui fait disparaître l'énigme 1
 
-        // 2. On affiche le conteneur de la carte
+        // 2. On affiche le radar
         let radar = document.getElementById('radar-container');
         radar.classList.remove('hidden');
         radar.style.display = 'block';
 
-        // 3. On force Leaflet à recalculer la taille de la carte
+        // 3. Rafraîchissement de la carte pour Leaflet
         setTimeout(function() {
             if (map) {
                 map.invalidateSize();
-                // On centre sur le point de l'énigme actuelle
                 if (enigmasLocations[currentStep]) {
                     map.setView(enigmasLocations[currentStep], 17);
                 }
             }
         }, 300);
 
-        // 4. On remonte tout en haut pour bien voir la carte
         window.scrollTo(0, 0);
     }
 
@@ -653,6 +652,30 @@
         }
     }
 
+    // --- FONCTION POUR PASSER LE PUZZLE (MALUS 15 MIN) ---
+    function passerPuzzle() {
+        // 1. On demande confirmation au joueur (Sécurité anti-misclick)
+        let choix = confirm("Êtes-vous sûr de vouloir forcer le passage ? Cela vous coûtera 15 minutes de pénalité sur votre temps global !");
+
+        if (choix) {
+            // 2. On retire 15 minutes (15 * 60 = 900 secondes) au chronomètre global
+            timeLeft -= 900;
+
+            // 3. On vérifie si cette pénalité ne tue pas le joueur (Chrono à zéro)
+            if (timeLeft <= 0) {
+                timeLeft = 0;
+                alert("Le temps est écoulé... Le Comte s'est évaporé dans la nature. Vous avez échoué.");
+                window.location.href = "defaite.html"; // Met ici ton lien de défaite si tu en as un
+                return; // On arrête tout
+            }
+
+            // 4. Si le joueur a survécu à la pénalité, on valide l'énigme
+            alert("Vous avez utilisé la force brute pour briser le sceau ! Vous perdez 15 minutes, mais le passage est ouvert.");
+
+            // On déclenche la réussite de l'énigme pour passer à la carte suivante
+            enigmeReussie();
+        }
+    }
     // --- LOGIQUE QCM (STEP 6) ---
     function verifierQCM(bouton, estCorrect) {
         if (estCorrect) {
