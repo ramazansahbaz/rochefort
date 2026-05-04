@@ -497,7 +497,7 @@
         erreursPendu = 0;
         document.getElementById('word-display').innerText = motCache.join(" ");
         document.getElementById('mauvaises-lettres').innerText = "Erreurs : ";
-        document.getElementById('pendu-img').src = "../img/pendu_0.png";
+        document.getElementById('pendu-img').src = "img/pendu_0.png";
     }
 
     function guessLetter() {
@@ -520,7 +520,7 @@
             applyPenalty();
             erreursPendu++;
             document.getElementById('mauvaises-lettres').innerText += " " + lettre;
-            document.getElementById('pendu-img').src = "../img/pendu_" + erreursPendu + ".png";
+            document.getElementById('pendu-img').src = "img/pendu_" + erreursPendu + ".png";
             if (erreursPendu >= maxErreurs) {
                 alert("Bûcher allumé ! Le mot change...");
                 initPendu();
@@ -593,7 +593,7 @@
             tile.style.width = '100px'; tile.style.height = '100px';
             tile.style.border = '1px solid #222'; tile.style.cursor = 'pointer';
             if (tileIdx !== 8) {
-                tile.style.backgroundImage = 'url("../img/puzzle.jpeg")';
+                tile.style.backgroundImage = 'url("img/puzzle.jpeg")';
                 tile.style.backgroundSize = '300px 300px';
                 const row = Math.floor(tileIdx / 3);
                 const col = tileIdx % 3;
