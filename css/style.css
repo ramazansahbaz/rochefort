@@ -1,0 +1,203 @@
+/* --- CONFIGURATION GÉNÉRALE --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #0a0a0a;
+    color: #e0e0e0;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+.mode-nuit {
+    background-color: #050505;
+}
+
+/* --- ACCUEIL --- */
+.accueil-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 3.5rem;
+    color: #ff3333;
+    text-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+    margin-bottom: 10px;
+    letter-spacing: 4px;
+}
+
+.subtitle {
+    font-style: italic;
+    color: #888;
+    margin-bottom: 40px;
+}
+
+/* --- CARTE ACTIVITÉ --- */
+.card-activite {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    padding: 40px;
+    border-radius: 15px;
+    max-width: 500px;
+    position: relative;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.card-activite:hover {
+    transform: translateY(-5px);
+    border-color: #ff3333;
+}
+
+.badge-danger {
+    background: #ff3333;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 5px 12px;
+    border-radius: 50px;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.quote {
+    font-style: italic;
+    color: #bbb;
+    margin: 20px 0;
+}
+
+.info-game {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+    font-size: 0.9rem;
+    color: #888;
+}
+
+/* --- BOUTONS --- */
+.btn-jouer, .btn-action {
+    display: inline-block;
+    background: #ff3333;
+    color: white;
+    text-decoration: none;
+    padding: 15px 30px;
+    border-radius: 5px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-jouer:hover, .btn-action:hover {
+    background: #cc0000;
+    box-shadow: 0 0 20px rgba(255, 51, 51, 0.4);
+    transform: scale(1.05);
+}
+
+/* --- CHRONO GLOBAL (60:00) --- */
+#chrono-container {
+    position: fixed; /* On le fixe en haut à droite */
+    top: 20px;
+    right: 20px;
+    z-index: 2000; /* Toujours au-dessus de tout */
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px 20px;
+    border: 2px solid #ff3333;
+    border-radius: 10px;
+    color: #ff3333;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* --- LE RADAR (La Carte) --- */
+#radar-container {
+    width: 100%;
+    height: 60vh; /* On réduit un peu la hauteur pour laisser de l'air */
+    margin-top: 100px; /* IMPORTANT : Crée de l'espace pour ne pas toucher au chrono global */
+    position: relative;
+    border-top: 2px solid #ff3333;
+    border-bottom: 2px solid #ff3333;
+}
+
+#navigation-ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000; /* Juste au-dessus de la carte */
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 10px;
+    text-align: center;
+    border-bottom: 2px solid #ff3333;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    background: #222; /* Pour voir un fond sombre si la carte charge mal */
+}
+
+#game-board {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.step {
+    background: #1a1a1a;
+    padding: 30px;
+    border-radius: 10px;
+    margin-top: 20px;
+    border: 1px solid #333;
+}
+
+.enigma-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #444;
+}
+
+input[type="text"] {
+    background: #222;
+    border: 1px solid #444;
+    color: white;
+    padding: 12px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+/* --- ANIMATION PÉNALITÉ --- */
+@keyframes flash-red {
+    0% { background-color: #550000; }
+    100% { background-color: #050505; }
+}
+
+.penalty-flash {
+    animation: flash-red 0.5s ease-out;
+}
+
+.hidden {
+    display: none !important;
+}

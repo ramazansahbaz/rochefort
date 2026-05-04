@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoPics - Nuit Noire</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .diff-marker {
+            position: absolute;
+            border: 3px solid red;
+            border-radius: 50%;
+            background: rgba(255, 0, 0, 0.3);
+            width: 40px;
+            height: 40px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 100;
+        }
+        .diff-img-box { position: relative; display: inline-block; width: 100%; max-width: 600px; }
+        .diff-img-box img { width: 100%; height: auto; display: block; }
+        #word-display { font-size: 2rem; letter-spacing: 5px; margin: 20px; color: white; }
+
+        /* Style du Chrono */
+        #chrono-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.85);
+            border: 2px solid #ff3333;
+            padding: 10px 20px;
+            z-index: 2000;
+            display: none;
+            border-radius: 5px;
+        }
+
+        /* --- Classes pour le Zoom --- */
+        .zoomable {
+            transition: transform 0.3s ease;
+            transform-origin: top center;
+            display: block;
+            margin: 0 auto;
+        }
+        .zoom-active {
+            transform: scale(1.8);
+            position: relative;
+            z-index: 500;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+        .btn-zoom {
+            background-color: #333;
+            color: white;
+            border: 1px solid #ff3333;
+            padding: 5px 15px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            border-radius: 3px;
+        }
+        .btn-zoom:hover { background-color: #550000; }
+
+        /* Styles boutons QCM */
+        .btn-qcm {
+            background: #222;
+            color: white;
+            border: 1px solid #ff3333;
+            padding: 15px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+        .btn-qcm:hover { background: #ff3333; }
+    </style>
+</head>
+<body class="mode-nuit">
+
+<div id="start-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border: 5px solid #ff3333; box-sizing: border-box;">
+    <h1 style="color: #ff3333; font-size: 4rem; text-shadow: 0 0 20px #ff0000; margin-bottom: 10px;">Nuit noire</h1>
+    <p style="color: #ccc; font-size: 1.2rem; max-width: 600px; margin-bottom: 30px; font-family: 'Courier New', Courier, monospace; padding: 0 20px;">
+        En cliquant ci-dessous, vous acceptez de défier le Comte.
+        <br>Vous avez <strong>110 minutes</strong> avant l'aube.
+        <br><span style="color: #ff3333;">Attention : Chaque erreur vous coûte 1 minute de vie.</span>
+    </p>
+    <button class="btn-action" style="font-size: 1.8rem; padding: 20px 40px;" onclick="demarrerJeu()">
+        S'INSCRIRE ET JOUER
+    </button>
+</div>
+
+<div id="chrono-container">
+    <h2 style="color: #ff3333; margin: 0; font-family: monospace; font-size: 2rem;" id="chrono-display">110:00</h2>
+</div>
+
+<div id="radar-container" class="hidden" style="position: relative;">
+
+    <div id="navigation-ui" class="hidden">
+        <div style="color: #ff3333; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px;">
+            Temps restant pour atteindre la zone :
+        </div>
+        <div id="temps-deplacement" style="font-size: 2.2rem; font-weight: bold; color: white;">
+            10:00
+        </div>
+    </div>
+
+    <div id="map" style="width: 100%; height: 100%;"></div>
+
+</div>
+
+<div id="game-board" class="hidden">
+    <div id="step-1" class="step hidden">
+        <h2>Énigme 1 : Le Chemin du Comte</h2>
+        <img src="../img/patrimoine_existant.jpeg" class="enigma-img" alt="Vue du patrimoine">
+        <p>Observez bien les environs. Sur quelle route sommes-nous ?</p>
+        <input type="text" id="ans-1" placeholder="Ex: A54" onkeypress="if(event.key === 'Enter') checkAnswer(1, 'E411')">
+        <br><button class="btn-action" onclick="checkAnswer(1, 'E411')">Valider</button>
+    </div>
+
+    <div id="step-2" class="step hidden">
+        <h2>Énigme 2 : Le pendu Mortel</h2>
+        <div style="margin-bottom: 15px;">
+            <img id="pendu-img" src="../img/pendu_0.png" alt="Le supplice" style="height: 180px;">
+        </div>
+        <div id="word-display">_ _ _ _ _</div>
+        <input type="text" id="letter" maxlength="1" style="width: 50px; text-align: center; text-transform: uppercase;" onkeypress="if(event.key === 'Enter') guessLetter()">
+        <button class="btn-action" onclick="guessLetter()">Proposer</button>
+        <p id="mauvaises-lettres" style="color: #ff3333; font-weight: bold;"></p>
+    </div>
+
+    <div id="step-3" class="step hidden">
+        <h2>Énigme 3 : Sombres Différences</h2>
+        <button class="btn-zoom" onclick="toggleZoom('conteneur-diff')">🔍 Activer/Désactiver la Loupe</button>
+
+        <div id="conteneur-diff" class="zoomable" style="display: flex; flex-direction: column; align-items: center;">
+            <div class="diff-img-box"><img src="../img/5_différences_base.jpeg"></div>
+            <div id="diff-clickable-zone" class="diff-img-box" onclick="handleDiffClick(event)" style="cursor: crosshair;">
+                <img src="../img/5_différences.jpeg">
+                <div id="found-markers"></div>
+            </div>
+        </div>
+        <div class="diff-status">Anomalies : <span id="diff-count">0</span> / 5</div>
+    </div>
+
+    <div id="step-4" class="step hidden">
+        <h2>Énigme 4 : Le Sceau Brisé</h2>
+        <div id="puzzle-board" style="width: 300px; height: 300px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); border: 2px solid #444; background: #000;"></div>
+        <br><button class="btn-action" onclick="retourAuRadar()">Fuir (Debug)</button>
+    </div>
+
+    <div id="step-5" class="step hidden">
+        <h2>Énigme 5 : L'Apparition</h2>
+        <button class="btn-zoom" onclick="toggleZoom('img-apparition')">🔍 Activer/Désactiver la Loupe</button>
+
+        <img id="img-apparition" src="../img/observation_comparée.jpeg" class="enigma-img zoomable" alt="Observation">
+        <p>Identifiez l'entité cachée.</p>
+        <input type="text" id="ans-5" placeholder="Nommez l'entité" onkeypress="if(event.key === 'Enter') checkAnswer(5, 'FANTOME')">
+        <br><button class="btn-action" onclick="checkAnswer(5, 'FANTOME')">Valider</button>
+    </div>
+
+    <div id="step-6" class="step hidden">
+        <h2>Énigme 6 : Le QCM Sinistre</h2>
+        <p>Le Comte vous observe. Une seule de ces affirmations sur les anciens condamnés est vraie. Choisissez bien, une erreur vous coûtera de précieuses minutes...</p>
+        <div id="qcm-container" style="display: flex; flex-direction: column; gap: 10px; max-width: 300px; margin: auto;">
+            <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils étaient pendus à l'aube</button>
+            <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils buvaient du sang</button>
+            <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils devenaient des molosses</button>
+            <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils étaient précipités du haut du Château Comtal</button>
+            <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils étaient emmurés vivants dans les remparts</button>
+            <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils servaient de cobayes aux rituels des moines</button>
+            <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils étaient contraints de boire le sang du Comte</button>
+            <button class="btn-qcm" onclick="verifierQCM(this, true)">Ils étaient enfermés dans les grottes</button>
+            <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils devaient creuser leurs propres tombes à mains nues</button>
+            <button class="btn-qcm" onclick="verifierQCM(this, false)">Ils étaient livrés en pâture aux ombres de la forêt</button>
+        </div>
+    </div>
+
+    <div id="step-7" class="step hidden">
+        <h2>Énigme 7 : L'Estimation Funèbre</h2>
+        <p>Quel était le poids exact (en kg) de la grille en fer forgé du cachot principal ? Vous devez deviner à 1kg près. Chaque erreur attire les molosses...</p>
+        <input type="number" id="poids-input" placeholder="Ex: 50" style="padding: 10px; font-size: 1.2rem; width: 150px; text-align: center; background: #222; color: white; border: 1px solid #555;">
+        <br><br>
+        <button class="btn-action" onclick="verifierPoids()">Soumettre le poids</button>
+        <p id="poids-feedback" style="color: #ff3333; font-weight: bold; min-height: 20px; margin-top: 15px;"></p>
+    </div>
+
+    <div id="step-8" class="step hidden">
+        <h2>Énigme 8 : L'Incantation</h2>
+        <p>Trouvez le mot de passe pour desceller la pierre. Chaque mauvaise lettre vous rapproche de la fin...</p>
+        <h3 id="pendu-mot-clavier" style="letter-spacing: 5px; font-size: 2rem; margin: 20px 0;">_ _ _ _ _ _ _</h3>
+        <div id="pendu-clavier" style="max-width: 400px; margin: 20px auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
+        </div>
+    </div>
+
+    <div id="step-9" class="step hidden">
+        <h2>Énigme 9 : Vérité Sanglante</h2>
+        <p>Une ancienne légende affirme que les créatures de Rochefort craignent l'eau de la Lomme plus que la lumière du soleil. Est-ce VRAI ou FAUX ?</p>
+        <div style="display: flex; gap: 20px; justify-content: center; margin-top: 20px;">
+            <button class="btn-action" style="padding: 15px 40px;" onclick="verifierVraiFaux(this, false)">VRAI</button>
+            <button class="btn-action" style="padding: 15px 40px;" onclick="verifierVraiFaux(this, true)">FAUX</button>
+        </div>
+    </div>
+
+    <div id="step-10" class="step hidden">
+        <h2>Énigme 10 : L'Incantation Oubliée</h2>
+        <p>Reconstituez ce fragment de parchemin trouvé dans les ruines pour repousser la malédiction :</p>
+        <div style="background: #111; padding: 20px; border: 1px solid #555; margin-top: 20px;">
+            <p style="font-size: 1.1rem; font-style: italic; line-height: 2.5;">
+                "Seul le
+                <input type="text" id="trou1" style="width: 70px; font-size: 1.1rem; text-align: center; text-transform: uppercase; background: #222; color: #ff3333; border: none; border-bottom: 2px solid #ff3333;" maxlength="4" placeholder="....">
+                versé avant l'
+                <input type="text" id="trou2" style="width: 70px; font-size: 1.1rem; text-align: center; text-transform: uppercase; background: #222; color: #ff3333; border: none; border-bottom: 2px solid #ff3333;" maxlength="4" placeholder="....">
+                pourra rendormir le
+                <input type="text" id="trou3" style="width: 85px; font-size: 1.1rem; text-align: center; text-transform: uppercase; background: #222; color: #ff3333; border: none; border-bottom: 2px solid #ff3333;" maxlength="5" placeholder=".....">
+                dans sa crypte."
+            </p>
+        </div>
+        <br>
+        <button class="btn-action" onclick="verifierTexteTrou()">valider la réponse</button>
+    </div>
+
+    <div id="step-11" class="step hidden">
+        <h2>Énigme 11 : L'Esprit Fracturé</h2>
+        <p>Le Comte a brisé le mot de passe. Trouvez les paires maudites pour révéler les lettres brouillées, puis reconstituez le mot !</p>
+        <div id="memory-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 300px; margin: 0 auto 20px auto;">
+        </div>
+        <h3 id="lettres-gagnees" style="letter-spacing: 15px; font-size: 2rem; color: #ff3333; min-height: 40px; margin-bottom: 20px;">_ _ _ _ _ _</h3>
+        <input type="text" id="anagramme-input" placeholder="Bloqué (Trouvez les paires)" style="padding: 10px; font-size: 1.2rem; text-transform: uppercase; text-align: center; background: #222; color: white; border: 1px solid #555;" disabled>
+        <br><br>
+        <button class="btn-action" onclick="verifierAnagrammeMemo()">Restaurer le mot</button>
+    </div>
+
+    <div id="step-12" class="step hidden">
+        <button onclick="verifierFinale(true)">Le Pieu taillé dans la Croix</button>
+        <button onclick="verifierFinale(false)">Une simple épée</button>
+    </div>
+
+    <button class="btn-action" style="margin-top: 30px;" onclick="retourAuRadar()">Retourner au Radar</button>
+</div>
+
+<script>
+    // --- VARIABLES GPS ---
+    let userLat = null;
+    let userLon = null;
+    let userMarker = null;
+    let geoWatchId = null;
+
+    // --- FONCTION DE SUIVI EN TEMPS RÉEL ---
+    function demarrerSuiviGPS() {
+        if ("geolocation" in navigator) {
+            // watchPosition suit le joueur en permanence
+            geoWatchId = navigator.geolocation.watchPosition(
+                function(position) {
+                    userLat = position.coords.latitude;
+                    userLon = position.coords.longitude;
+
+                    // 1. Si la carte existe, on met à jour le point bleu
+                    if (map) {
+                        if (!userMarker) {
+                            // Création du point bleu s'il n'existe pas encore
+                            userMarker = L.circleMarker([userLat, userLon], {
+                                color: '#3388ff',
+                                fillColor: '#3388ff',
+                                fillOpacity: 0.8,
+                                radius: 8
+                            }).addTo(map);
+                        } else {
+                            // Le joueur bouge -> le point bleu bouge
+                            userMarker.setLatLng([userLat, userLon]);
+                        }
+                    }
+
+                    // 2. On vérifie en permanence s'il est arrivé à l'étape 12
+                    verifierArrivee(userLat, userLon);
+                },
+                function(error) {
+                    console.warn("Signal GPS faible ou refusé : ", error.message);
+                },
+                {
+                    enableHighAccuracy: true, // Force le vrai GPS (pas juste le Wi-Fi)
+                    maximumAge: 0,
+                    timeout: 5000
+                }
+            );
+        } else {
+            alert("Votre téléphone ne supporte pas le GPS.");
+        }
+    }
+
+    // On lance le traceur IMMÉDIATEMENT au chargement de la page
+    demarrerSuiviGPS();
+
+    // --- VARIABLES GLOBALES ---
+    let currentStep = 1;
+    let map, marker;
+    let timeLeft = 110 * 60;
+    let chronoInterval;
+
+    // --- COORDONNÉES GPS POUR LES 12 ÉNIGMES ---
+    const enigmasLocations = [
+        null,
+        [50.15681942458253, 5.222461798818987], // Étape 1 : Départ
+        [50.159726771358365, 5.2195838321121215], // Étape 2
+        [50.160859606125626, 5.221676898807207],  // Étape 3
+        [50.15664023838309, 5.21920491488863],    // Étape 4 (Le Taquin)
+        [50.1581026093535, 5.222416689623276],    // Étape 5
+        [50.158500, 5.220500], // Étape 6 : Proche de l'église
+        [50.157500, 5.224000], // Étape 7 : Vers le Château Comtal
+        [50.155500, 5.223000], // Étape 8 : Ruelles sud
+        [50.159000, 5.225000], // Étape 9 : Hauteurs de la ville (Prévu pour la suite)
+        [50.161000, 5.218000], // Étape 10 : Quartier nord
+        [50.162000, 5.220000], // Étape 11 : Parc
+        [50.157000, 5.217000]  // Étape 12 : Le dernier rempart
+    ];
+
+    // --- FONCTION DE ZOOM ---
+    function toggleZoom(elementId) {
+        document.getElementById(elementId).classList.toggle('zoom-active');
+    }
+
+    // --- SYSTEME DE CHRONO ET PÉNALITÉS ---
+    function demarrerJeu() {
+        // 1. Cache l'écran de garde
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('chrono-container').style.display = 'block';
+
+        // 2. Initialisation des variables
+        currentStep = 1;
+        initMap();
+        lancerChrono();
+
+        // 3. AFFICHAGE DE LA CARTE EN PREMIER
+        placerMarqueur(); // Prépare le point n°1 sur la carte
+        retourAuRadar();  // Affiche la carte et cache le plateau de jeu
+    }
+
+    function lancerChrono() {
+        chronoInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(chronoInterval);
+                alert("LE TEMPS EST ÉCOULÉ ! LE COMTE VOUS A RATTRAPÉ !");
+                location.href = "../index.html";
+                return;
+            }
+            timeLeft--;
+            mettreAJourAffichageChrono();
+        }, 1000);
+    }
+
+    function mettreAJourAffichageChrono() {
+        let mins = Math.floor(timeLeft / 60);
+        let secs = timeLeft % 60;
+        document.getElementById('chrono-display').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    function applyPenalty() {
+        timeLeft -= 60;
+        mettreAJourAffichageChrono();
+
+        // Flash rouge
+        document.body.style.backgroundColor = "#550000";
+        setTimeout(() => { document.body.style.backgroundColor = ""; }, 150);
+
+        // Jouer le son d'horreur (décommente la ligne ci-dessous si tu as le fichier)
+        // new Audio('../audio/chien_mechant.mp3').play();
+    }
+
+    // --- CARTE ET NAVIGATION ---
+    function initMap() {
+        if (map) return;
+
+        // On crée la carte
+        map = L.map('map').setView(enigmasLocations[1], 17);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20
+        }).addTo(map);
+
+        // Si le GPS a déjà trouvé le joueur pendant qu'il lisait l'accueil,
+        // on affiche son point bleu immédiatement sur la carte.
+        if (userLat && userLon && !userMarker) {
+            userMarker = L.circleMarker([userLat, userLon], {
+                color: '#3388ff',
+                fillColor: '#3388ff',
+                fillOpacity: 0.8,
+                radius: 8
+            }).addTo(map);
+        }
+
+        // SUPPRIMÉ : map.locate() et map.on('locationfound') ne sont plus ici !
+    }
+
+    function placerMarqueur() {
+        if (marker) map.removeLayer(marker);
+
+        if (currentStep <= 12) {
+            let loc = enigmasLocations[currentStep];
+            map.setView(loc, 17);
+            marker = L.marker(loc).addTo(map);
+
+            marker.bindPopup("<b>Sceau détecté !</b><br>Cliquez pour examiner.").openPopup();
+
+            // --- AU CLIC : On bascule sur l'énigme ---
+            marker.on('click', () => {
+                document.getElementById('radar-container').classList.add('hidden');
+                document.getElementById('game-board').classList.remove('hidden');
+                lancerEnigme(currentStep);
+            });
+        } else {
+            window.location.href = "victoire.html";
+        }
+    }
+
+    function lancerEnigme(step) {
+        // Cache la carte et montre le plateau de jeu
+        document.getElementById('radar-container').classList.add('hidden');
+        document.getElementById('game-board').classList.remove('hidden');
+        document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
+
+        const target = document.getElementById('step-' + step);
+        if (target) {
+            target.classList.remove('hidden');
+
+            // Initialisations spécifiques aux énigmes
+            if (step === 2) initPendu();
+            if (step === 4) initPuzzle();
+            if (step === 8) initPenduClavier();
+            if (step === 11) initMemoAnagramme(); // On génère le memory quand le joueur arrive ici !
+        } else {
+            // S'il reste une étape non codée (comme l'étape 12), elle se valide seule
+            alert("Le lieu " + step + " résonne d'une magie ancienne... (Validation automatique)");
+            enigmeReussie();
+        }
+    }
+
+    function retourAuRadar() {
+        // 1. Cacher le jeu
+        document.getElementById('game-board').classList.add('hidden');
+
+        // 2. Montrer la carte
+        let radar = document.getElementById('radar-container');
+        radar.classList.remove('hidden');
+        radar.style.display = 'block';
+
+        // 3. Forcer Leaflet à se réveiller (Le secret est là)
+        setTimeout(function() {
+            if (map) {
+                map.invalidateSize();
+                if (enigmasLocations[currentStep]) {
+                    map.setView(enigmasLocations[currentStep], 17);
+                }
+            }
+        }, 400);
+    }
+
+    function enigmeReussie() {
+        currentStep++;
+
+        if (currentStep === 12) {
+            // Message de test
+            alert("Le mot est reconstitué ! Victoire immédiate !");
+
+            document.getElementById('game-board').classList.add('hidden');
+            retourAuRadar();
+            let loc12 = enigmasLocations[12];
+            lancerNavigationChronometree(loc12[0], loc12[1], 5);
+
+            // --- ON FORCE LA VICTOIRE DIRECTEMENT ---
+            window.location.href = "php/victoire.html";
+
+        } else {
+            alert("Bonne réponse ! Le sceau est brisé... L'entité se déplace.");
+            placerMarqueur();
+            retourAuRadar();
+        }
+    }
+
+    // Validation classique pour textes
+    function checkAnswer(step, correct) {
+        const inputField = document.getElementById('ans-' + step);
+        if (!inputField) return;
+        if (inputField.value.toUpperCase().trim() === correct) {
+            enigmeReussie();
+        } else {
+            applyPenalty();
+        }
+    }
+
+    // --- LOGIQUE PENDU (STEP 2) ---
+    const listeMots = ["COMTE", "SANG", "CAVEAU", "TENEBRES", "VAMPIRE", "MALEDICTION", "CRYPTE"];
+    let motSecret, motCache, lettresEssayees, erreursPendu;
+    const maxErreurs = 9;
+
+    function initPendu() {
+        motSecret = listeMots[Math.floor(Math.random() * listeMots.length)];
+        motCache = Array(motSecret.length).fill("_");
+        lettresEssayees = [];
+        erreursPendu = 0;
+        document.getElementById('word-display').innerText = motCache.join(" ");
+        document.getElementById('mauvaises-lettres').innerText = "Erreurs : ";
+        document.getElementById('pendu-img').src = "../img/pendu_0.png";
+    }
+
+    function guessLetter() {
+        const inputField = document.getElementById('letter');
+        const lettre = inputField.value.toUpperCase().trim();
+        inputField.value = "";
+        if(!lettre || lettresEssayees.includes(lettre)) return;
+
+        lettresEssayees.push(lettre);
+        let trouve = false;
+        for (let i = 0; i < motSecret.length; i++) {
+            if (motSecret[i] === lettre) {
+                motCache[i] = lettre;
+                trouve = true;
+            }
+        }
+        document.getElementById('word-display').innerText = motCache.join(" ");
+
+        if (!trouve) {
+            applyPenalty();
+            erreursPendu++;
+            document.getElementById('mauvaises-lettres').innerText += " " + lettre;
+            document.getElementById('pendu-img').src = "../img/pendu_" + erreursPendu + ".png";
+            if (erreursPendu >= maxErreurs) {
+                alert("Bûcher allumé ! Le mot change...");
+                initPendu();
+            }
+        } else if (!motCache.includes("_")) {
+            setTimeout(enigmeReussie, 500);
+        }
+    }
+
+    // --- LOGIQUE DIFFÉRENCES (STEP 3) ---
+    let countFound = 0;
+    const diffZones = [
+        { x: 33.1, y: 53.9, radius: 7, found: false },
+        { x: 90.1, y: 32.8, radius: 7, found: false },
+        { x: 72.2, y: 73.2, radius: 6, found: false },
+        { x: 74.0, y: 4.8, radius: 6, found: false },
+        { x: 76.7, y: 44.2, radius: 8, found: false }
+    ];
+
+    function handleDiffClick(e) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        let match = false;
+        diffZones.forEach(z => {
+            if (!z.found) {
+                const dist = Math.sqrt(Math.pow(x - z.x, 2) + Math.pow(y - z.y, 2));
+                if (dist <= z.radius) {
+                    z.found = true;
+                    countFound++;
+                    match = true;
+                    const m = document.createElement('div');
+                    m.className = 'diff-marker';
+                    m.style.left = z.x + '%';
+                    m.style.top = z.y + '%';
+                    e.currentTarget.appendChild(m);
+                    document.getElementById('diff-count').innerText = countFound;
+                    if (countFound === 5) setTimeout(enigmeReussie, 500);
+                }
+            }
+        });
+        if(!match) applyPenalty();
+    }
+
+    // --- LOGIQUE PUZZLE (STEP 4) ---
+    let puzzleOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+
+    function initPuzzle() {
+        puzzleOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+        let emptyPos = 8;
+        for (let i = 0; i < 150; i++) {
+            let validMoves = [];
+            if (emptyPos % 3 > 0) validMoves.push(emptyPos - 1);
+            if (emptyPos % 3 < 2) validMoves.push(emptyPos + 1);
+            if (emptyPos >= 3) validMoves.push(emptyPos - 3);
+            if (emptyPos <= 5) validMoves.push(emptyPos + 3);
+
+            let randomMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+            [puzzleOrder[emptyPos], puzzleOrder[randomMove]] = [puzzleOrder[randomMove], puzzleOrder[emptyPos]];
+            emptyPos = randomMove;
+        }
+        renderPuzzle();
+    }
+
+    function renderPuzzle() {
+        const board = document.getElementById('puzzle-board');
+        board.innerHTML = '';
+        puzzleOrder.forEach((tileIdx, currentPos) => {
+            const tile = document.createElement('div');
+            tile.style.width = '100px'; tile.style.height = '100px';
+            tile.style.border = '1px solid #222'; tile.style.cursor = 'pointer';
+            if (tileIdx !== 8) {
+                tile.style.backgroundImage = 'url("../img/puzzle.jpeg")';
+                tile.style.backgroundSize = '300px 300px';
+                const row = Math.floor(tileIdx / 3);
+                const col = tileIdx % 3;
+                tile.style.backgroundPosition = `-${col * 100}px -${row * 100}px`;
+                tile.onclick = () => swapTile(currentPos);
+            } else {
+                tile.style.backgroundColor = '#000';
+            }
+            board.appendChild(tile);
+        });
+    }
+
+    function swapTile(pos) {
+        const emptyPos = puzzleOrder.indexOf(8);
+        if ([pos-1, pos+1, pos-3, pos+3].includes(emptyPos)) {
+            if ((pos % 3 === 0 && emptyPos === pos - 1) || (pos % 3 === 2 && emptyPos === pos + 1)) return;
+            [puzzleOrder[pos], puzzleOrder[emptyPos]] = [puzzleOrder[emptyPos], puzzleOrder[pos]];
+            renderPuzzle();
+            if (puzzleOrder.every((val, index) => val === index)) {
+                setTimeout(enigmeReussie, 300);
+            }
+        }
+    }
+
+    // --- LOGIQUE QCM (STEP 6) ---
+    function verifierQCM(bouton, estCorrect) {
+        if (estCorrect) {
+            bouton.style.backgroundColor = "green";
+            setTimeout(() => enigmeReussie(), 1000);
+        } else {
+            bouton.style.backgroundColor = "darkred";
+            bouton.disabled = true;
+            applyPenalty();
+        }
+    }
+
+    // --- LOGIQUE ESTIMATION POIDS (STEP 7) ---
+    const POIDS_SECRET = 84;
+    function verifierPoids() {
+        let guess = parseInt(document.getElementById("poids-input").value);
+        let feedback = document.getElementById("poids-feedback");
+
+        if (isNaN(guess)) return;
+
+        if (guess >= POIDS_SECRET - 1 && guess <= POIDS_SECRET + 1) {
+            feedback.style.color = "green";
+            feedback.innerText = "Le mécanisme se débloque...";
+            setTimeout(() => enigmeReussie(), 1000);
+        } else {
+            feedback.innerText = guess < POIDS_SECRET ? "C'est plus lourd..." : "C'est plus léger...";
+            applyPenalty();
+        }
+    }
+
+    // --- LOGIQUE PENDU CLAVIER (STEP 8) ---
+    const MOT_PENDU_8 = "MALEDICTION"; // Mot différent de l'étape 2
+    let lettresTrouvees8 = [];
+
+    function initPenduClavier() {
+        let clavier = document.getElementById("pendu-clavier");
+        clavier.innerHTML = "";
+        lettresTrouvees8 = [];
+        majAffichagePenduClavier();
+
+        for (let i = 65; i <= 90; i++) {
+            let lettre = String.fromCharCode(i);
+            let btn = document.createElement("button");
+            btn.innerText = lettre;
+            btn.style.padding = "10px 15px";
+            btn.style.cursor = "pointer";
+            btn.style.backgroundColor = "#222";
+            btn.style.color = "#ccc";
+            btn.style.border = "1px solid #555";
+            btn.style.fontWeight = "bold";
+
+            btn.onclick = function() {
+                verifierLettrePenduClavier(lettre, btn);
+            };
+            clavier.appendChild(btn);
+        }
+    }
+
+    function verifierLettrePenduClavier(lettre, bouton) {
+        bouton.disabled = true;
+
+        if (MOT_PENDU_8.includes(lettre)) {
+            bouton.style.backgroundColor = "green";
+            lettresTrouvees8.push(lettre);
+            majAffichagePenduClavier();
+        } else {
+            bouton.style.backgroundColor = "darkred";
+            applyPenalty();
+        }
+    }
+
+    function majAffichagePenduClavier() {
+        let affichage = "";
+        let victoire = true;
+
+        for (let char of MOT_PENDU_8) {
+            if (lettresTrouvees8.includes(char)) {
+                affichage += char + " ";
+            } else {
+                affichage += "_ ";
+                victoire = false;
+            }
+        }
+
+        document.getElementById("pendu-mot-clavier").innerText = affichage;
+
+        if (victoire) {
+            setTimeout(() => enigmeReussie(), 1000);
+        }
+    }
+    // --- LOGIQUE VRAI OU FAUX (STEP 9) ---
+    function verifierVraiFaux(bouton, estCorrect) {
+        if (estCorrect) {
+            bouton.style.backgroundColor = "green";
+            bouton.style.color = "white";
+            setTimeout(() => enigmeReussie(), 1000);
+        } else {
+            bouton.style.backgroundColor = "darkred";
+            bouton.style.color = "white";
+            bouton.disabled = true;
+
+            // Si la fonction applyPenalty existe, on l'utilise, sinon on met une simple alerte
+            if (typeof applyPenalty === "function") {
+                applyPenalty();
+            } else {
+                alert("MAUVAISE RÉPONSE ! Vous perdez 1 minute !");
+            }
+        }
+    }
+
+    // --- LOGIQUE TEXTE A TROU MULTIPLE (STEP 10) ---
+    function verifierTexteTrou() {
+        let t1 = document.getElementById("trou1");
+        let t2 = document.getElementById("trou2");
+        let t3 = document.getElementById("trou3");
+
+        // Sécurité si un des champs n'est pas trouvé
+        if (!t1 || !t2 || !t3) {
+            alert("Erreur : les champs de texte sont introuvables !");
+            return;
+        }
+
+        // Récupération des mots (en majuscules et sans espaces)
+        let rep1 = t1.value.toUpperCase().trim();
+        let rep2 = t2.value.toUpperCase().trim();
+        let rep3 = t3.value.toUpperCase().trim();
+
+        // Vérification des 3 mots simultanément
+        if (rep1 === "SANG" && rep2 === "AUBE" && rep3 === "COMTE") {
+            // C'est gagné ! On met tout en vert.
+            t1.style.backgroundColor = "green"; t1.style.color = "white";
+            t2.style.backgroundColor = "green"; t2.style.color = "white";
+            t3.style.backgroundColor = "green"; t3.style.color = "white";
+            setTimeout(() => enigmeReussie(), 1000);
+        } else {
+            // C'est perdu ! On flashe tout en rouge puis on remet normal.
+            [t1, t2, t3].forEach(t => {
+                t.style.backgroundColor = "darkred";
+                t.style.color = "white";
+                setTimeout(() => {
+                    t.style.backgroundColor = "#222";
+                    t.style.color = "#ff3333";
+                }, 1000);
+            });
+
+            // On applique la pénalité de temps
+            if (typeof applyPenalty === "function") {
+                applyPenalty();
+            } else {
+                alert("MAUVAISE INCANTATION ! Vous perdez 1 minute !");
+            }
+        }
+    }
+
+    // --- LOGIQUE ANAGRAMME (STEP 11) ---
+    // --- LOGIQUE MÉMO-ANAGRAMME (STEP 11) ---
+    const motsMacabres = ["CAVEAU", "MAUDIT", "TOMBES", "DEMONS", "MOINES", "GOULES"];
+    const emojis = ["💀", "🦇", "🕷️", "🕯️", "🩸", "🐺"];
+
+    let motChoisi = "";
+    let lettresBrouillees = [];
+    let lettresRevelees = 0;
+    let carteRetournee = null;
+    let verouillageTableau = false;
+
+    function initMemoAnagramme() {
+        // 1. Choix du mot aléatoire et brouillage
+        motChoisi = motsMacabres[Math.floor(Math.random() * motsMacabres.length)];
+        lettresBrouillees = motChoisi.split('').sort(() => 0.5 - Math.random());
+
+        // 2. Création des paires (6 paires = 12 cartes)
+        let cartes = [...emojis, ...emojis];
+        cartes.sort(() => 0.5 - Math.random()); // Mélange des cartes
+
+        // 3. Affichage de la grille
+        let grid = document.getElementById('memory-grid');
+        grid.innerHTML = '';
+        cartes.forEach((emoji) => {
+            let card = document.createElement('div');
+            card.style.background = '#333';
+            card.style.height = '60px';
+            card.style.display = 'flex';
+            card.style.alignItems = 'center';
+            card.style.justifyContent = 'center';
+            card.style.fontSize = '2rem';
+            card.style.cursor = 'pointer';
+            card.style.border = '1px solid #ff3333';
+            card.dataset.valeur = emoji;
+            card.onclick = () => retournerCarte(card);
+            grid.appendChild(card);
+        });
+
+        document.getElementById('lettres-gagnees').innerText = "_ ".repeat(motChoisi.length).trim();
+    }
+
+    function retournerCarte(carte) {
+        // Bloque le clic si deux cartes sont déjà retournées ou si on clique sur une carte validée/déjà visible
+        if (verouillageTableau || carte === carteRetournee || carte.style.background === 'transparent') return;
+
+        // Retourne la carte
+        carte.innerText = carte.dataset.valeur;
+        carte.style.background = '#555';
+
+        if (!carteRetournee) {
+            carteRetournee = carte; // Première carte cliquée
+            return;
+        }
+
+        // Deuxième carte cliquée
+        verouillageTableau = true;
+
+        if (carte.dataset.valeur === carteRetournee.dataset.valeur) {
+            // MATCH ! On laisse les cartes visibles, mais on enlève le fond
+            setTimeout(() => {
+                carte.style.background = 'transparent';
+                carte.style.border = '1px solid #555';
+                carte.style.cursor = 'default';
+                carteRetournee.style.background = 'transparent';
+                carteRetournee.style.border = '1px solid #555';
+                carteRetournee.style.cursor = 'default';
+                carteRetournee = null;
+                verouillageTableau = false;
+                revelerLettre(); // On donne une lettre en récompense
+            }, 500);
+        } else {
+            // ERREUR ! On cache à nouveau
+            setTimeout(() => {
+                carte.innerText = '';
+                carteRetournee.innerText = '';
+                carte.style.background = '#333';
+                carteRetournee.style.background = '#333';
+                carteRetournee = null;
+                verouillageTableau = false;
+            }, 1000);
+            applyPenalty();
+        }
+    }
+
+    function revelerLettre() {
+        lettresRevelees++;
+        let affichage = "";
+
+        for (let i = 0; i < motChoisi.length; i++) {
+            if (i < lettresRevelees) {
+                affichage += lettresBrouillees[i] + " ";
+            } else {
+                affichage += "_ ";
+            }
+        }
+        document.getElementById('lettres-gagnees').innerText = affichage.trim();
+
+        // Si toutes les lettres sont révélées, on débloque la zone de réponse
+        if (lettresRevelees === motChoisi.length) {
+            let inputField = document.getElementById('anagramme-input');
+            inputField.disabled = false;
+            inputField.placeholder = "Quel est le mot ?";
+            inputField.style.borderColor = "#ff3333";
+        }
+    }
+
+    function verifierAnagrammeMemo() {
+        let inputField = document.getElementById("anagramme-input");
+        let reponse = inputField.value.toUpperCase().trim();
+
+        if (lettresRevelees < motChoisi.length) {
+            alert("Il faut d'abord trouver toutes les paires !");
+            return;
+        }
+
+        if (reponse === motChoisi) {
+            inputField.style.backgroundColor = "green";
+            inputField.style.color = "white";
+            setTimeout(() => enigmeReussie(), 1000);
+        } else {
+            applyPenalty(); // Perd une minute
+        }
+    }
+    // --- VARIABLES DE NAVIGATION ---
+
+    let timerDeplacement;
+    let tempsRestantDeplacement;
+    let cibleLat, cibleLon;
+    let possedeSceau = false;
+    let navigationEnCours = false;
+
+    // 1. Fonction pour lancer un trajet chronométré
+    function lancerNavigationChronometree(lat, lon, minutes) {
+        cibleLat = lat;
+        cibleLon = lon;
+        tempsRestantDeplacement = minutes * 60;
+        navigationEnCours = true;
+
+        // 1. On affiche l'UI du chrono d'étape
+        let navUI = document.getElementById('navigation-ui');
+        if (navUI) navUI.classList.remove('hidden');
+
+        // 2. VISUEL : On dessine la zone rouge sur la carte
+        // On retire d'abord l'ancien marqueur s'il existe
+        if (marker) map.removeLayer(marker);
+
+        // On ajoute un cercle rouge de 50 mètres de rayon
+        L.circle([lat, lon], {
+            color: '#ff3333',
+            fillColor: '#ff3333',
+            fillOpacity: 0.4,
+            radius: 50
+        }).addTo(map);
+
+        // On ajoute un marqueur spécial "Arrivée"
+        marker = L.marker([lat, lon]).addTo(map)
+            .bindPopup("<b>REPAIRE DU COMTE</b><br>Vite, entrez dans la zone !")
+            .openPopup();
+
+        // On centre la carte pour que le joueur voie où il doit aller
+        map.setView([lat, lon], 16);
+
+        // 3. Gestion du chrono (ton code existant)
+        if (timerDeplacement) clearInterval(timerDeplacement);
+        timerDeplacement = setInterval(() => {
+            tempsRestantDeplacement--;
+            let min = Math.floor(tempsRestantDeplacement / 60);
+            let sec = tempsRestantDeplacement % 60;
+            let display = document.getElementById('temps-deplacement');
+            if (display) {
+                display.innerText = (min < 10 ? "0" : "") + min + ":" + (sec < 10 ? "0" : "") + sec;
+            }
+
+            // Dans le setInterval de lancerNavigationChronometree :
+            if (tempsRestantDeplacement <= 0) {
+                clearInterval(timerDeplacement);
+                timerDeplacement = null;
+
+                // ACTION DE DÉFAITE IMMÉDIATE
+                alert("LE COMTE S'EST ÉCHAPPÉ ! Vous n'avez pas pu récupérer le dernier sceau à temps. La mission est un échec.");
+                window.location.href = "defaite.html";
+            }
+        }, 1000);
+    }
+
+    // 2. Vérification de la distance
+    function verifierArrivee(lat, lon) {
+        if (navigationEnCours && cibleLat && cibleLon) {
+            let dist = calculerDistance(lat, lon, cibleLat, cibleLon);
+
+            // Si le joueur entre dans le rayon de 50m autour du Château (Zone Rouge)
+            if (dist < 50) {
+                navigationEnCours = false;
+                if (timerDeplacement) clearInterval(timerDeplacement); // On arrête le chrono d'étape
+
+                alert("ZONE ATTEINTE ! Vous avez intercepté le Comte et récupéré le dernier sceau !");
+                window.location.href = "victoire.html";
+            }
+        }
+    }
+
+    // 3. La grosse pénalité (-20 minutes)
+    function appliquerGrossePenalite() {
+        alert("TROP TARD ! Le Comte a pris de l'avance. Pénalité de 20 minutes !");
+
+        // 1. Appliquer la pénalité au temps global
+        timeLeft -= 1200; // -20 minutes
+
+        // 2. Vérifier si le joueur a perdu
+        if (timeLeft <= 0) {
+            timeLeft = 0;
+            alert("Le temps est écoulé... Le Comte s'est évaporé dans la nature. Vous avez échoué.");
+            window.location.href = "defaite.html"; // Redirige vers une page de défaite
+        } else {
+            // Le joueur est en retard mais peut encore finir
+            alert("Il vous reste très peu de temps pour atteindre la zone avant la fin du chrono global ! Dépêchez-vous !");
+
+            // On cache le petit timer de l'étape car il est fini
+            let navUI = document.getElementById('navigation-ui');
+            if (navUI) navUI.classList.add('hidden');
+
+            navigationEnCours = false;
+        }
+    }
+
+    function fermerModalSceau() {
+        // NOUVEAU : On force la disparition de la modale
+        let modal = document.getElementById('modal-sceau');
+        if (modal) modal.style.display = 'none';
+
+        let navUI = document.getElementById('navigation-ui');
+        if (navUI) navUI.classList.add('hidden');
+
+        let radar = document.getElementById('radar-container');
+        if (radar) radar.classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
