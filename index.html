@@ -205,16 +205,37 @@
         <div style="background: #111; padding: 20px; border: 1px solid #555; margin-top: 20px;">
             <p style="font-size: 1.1rem; font-style: italic; line-height: 2.5;">
                 "Seul le
-                <input type="text" id="trou1" style="width: 70px; font-size: 1.1rem; text-align: center; text-transform: uppercase; background: #222; color: #ff3333; border: none; border-bottom: 2px solid #ff3333;" maxlength="4" placeholder="....">
+                <select id="trou1" style="font-size: 1.1rem; text-align: center; background: #222; color: #ff3333; border: 1px solid #ff3333; padding: 5px; cursor: pointer;">
+                    <option value="">...</option>
+                    <option value="POISON">POISON</option>
+                    <option value="SANG">SANG</option>
+                    <option value="VIN">VIN</option>
+                    <option value="SEL">SEL</option>
+                    <option value="FEU">FEU</option>
+                </select>
                 versé avant l'
-                <input type="text" id="trou2" style="width: 70px; font-size: 1.1rem; text-align: center; text-transform: uppercase; background: #222; color: #ff3333; border: none; border-bottom: 2px solid #ff3333;" maxlength="4" placeholder="....">
+                <select id="trou2" style="font-size: 1.1rem; text-align: center; background: #222; color: #ff3333; border: 1px solid #ff3333; padding: 5px; cursor: pointer;">
+                    <option value="">...</option>
+                    <option value="ECLIPSE">ECLIPSE</option>
+                    <option value="AUBE">AUBE</option>
+                    <option value="ORAGE">ORAGE</option>
+                    <option value="HIVER">HIVER</option>
+                    <option value="OFFRANDE">OFFRANDE</option>
+                </select>
                 pourra rendormir le
-                <input type="text" id="trou3" style="width: 85px; font-size: 1.1rem; text-align: center; text-transform: uppercase; background: #222; color: #ff3333; border: none; border-bottom: 2px solid #ff3333;" maxlength="5" placeholder=".....">
+                <select id="trou3" style="font-size: 1.1rem; text-align: center; background: #222; color: #ff3333; border: 1px solid #ff3333; padding: 5px; cursor: pointer;">
+                    <option value="">...</option>
+                    <option value="DEMON">DEMON</option>
+                    <option value="GARDIEN">GARDIEN</option>
+                    <option value="VAMPIRE">VAMPIRE</option>
+                    <option value="COMTE">COMTE</option>
+                    <option value="MOINE">MOINE</option>
+                </select>
                 dans sa crypte."
             </p>
         </div>
         <br>
-        <button class="btn-action" onclick="verifierTexteTrou()">valider les réponses</button>
+        <button class="btn-action" onclick="verifierTexteTrou()">Valider l'incantation</button>
     </div>
 
     <div id="step-11" class="step hidden">
@@ -407,11 +428,20 @@
     }
 
     function lancerEnigme(step) {
-        // Cache la carte et montre le plateau de jeu
-        document.getElementById('radar-container').classList.add('hidden');
-        document.getElementById('game-board').classList.remove('hidden');
+        // 1. On force la disparition de la carte (écrase le bug d'affichage)
+        let radar = document.getElementById('radar-container');
+        radar.classList.add('hidden');
+        radar.style.display = 'none'; // <-- LA CORRECTION EST ICI
+
+        // 2. On affiche le plateau de jeu
+        let gameBoard = document.getElementById('game-board');
+        gameBoard.classList.remove('hidden');
+        gameBoard.style.display = 'block';
+
+        // 3. On cache toutes les énigmes par défaut
         document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
 
+        // 4. On affiche l'énigme cible
         const target = document.getElementById('step-' + step);
         if (target) {
             target.classList.remove('hidden');
@@ -420,12 +450,14 @@
             if (step === 2) initPendu();
             if (step === 4) initPuzzle();
             if (step === 8) initPenduClavier();
-            if (step === 11) initMemoAnagramme(); // On génère le memory quand le joueur arrive ici !
+            if (step === 11) initMemoAnagramme();
         } else {
-            // S'il reste une étape non codée (comme l'étape 12), elle se valide seule
             alert("Le lieu " + step + " résonne d'une magie ancienne... (Validation automatique)");
             enigmeReussie();
         }
+
+        // 5. On remonte tout en haut de la page (Donne l'effet "Rafraîchissement")
+        window.scrollTo(0, 0);
     }
 
     function retourAuRadar() {
@@ -727,46 +759,70 @@
         }
     }
     // --- LOGIQUE TEXTE A TROU MULTIPLE (STEP 10) ---
+    // --- LOGIQUE TEXTE A TROU MULTIPLE (STEP 10) ---
+    // --- LOGIQUE TEXTE A TROU MULTIPLE (STEP 10) ---
     function verifierTexteTrou() {
         let t1 = document.getElementById("trou1");
         let t2 = document.getElementById("trou2");
         let t3 = document.getElementById("trou3");
 
-        // Sécurité si un des champs n'est pas trouvé
-        if (!t1 || !t2 || !t3) {
-            alert("Erreur : les champs de texte sont introuvables !");
+        if (!t1 || !t2 || !t3) return;
+
+        let rep1 = t1.value;
+        let rep2 = t2.value;
+        let rep3 = t3.value;
+
+        // Sécurité : le joueur doit remplir les 3 trous
+        if (rep1 === "" || rep2 === "" || rep3 === "") {
+            alert("Veuillez remplir tous les trous de l'incantation !");
             return;
         }
 
-        // Récupération des mots (en majuscules et sans espaces)
-        let rep1 = t1.value.toUpperCase().trim();
-        let rep2 = t2.value.toUpperCase().trim();
-        let rep3 = t3.value.toUpperCase().trim();
+        let nbErreurs = 0;
 
-        // Vérification des 3 mots simultanément
-        if (rep1 === "SANG" && rep2 === "AUBE" && rep3 === "COMTE") {
-            // C'est gagné ! On met tout en vert.
+        // Vérification Trou 1
+        if (rep1 === "SANG") {
             t1.style.backgroundColor = "green"; t1.style.color = "white";
+        } else {
+            t1.style.backgroundColor = "darkred"; t1.style.color = "white";
+            nbErreurs++;
+        }
+
+        // Vérification Trou 2
+        if (rep2 === "AUBE") {
             t2.style.backgroundColor = "green"; t2.style.color = "white";
+        } else {
+            t2.style.backgroundColor = "darkred"; t2.style.color = "white";
+            nbErreurs++;
+        }
+
+        // Vérification Trou 3
+        if (rep3 === "COMTE") {
             t3.style.backgroundColor = "green"; t3.style.color = "white";
+        } else {
+            t3.style.backgroundColor = "darkred"; t3.style.color = "white";
+            nbErreurs++;
+        }
+
+        // Résultat final
+        if (nbErreurs === 0) {
             setTimeout(() => enigmeReussie(), 1000);
         } else {
-            // C'est perdu ! On flashe tout en rouge puis on remet normal.
-            [t1, t2, t3].forEach(t => {
-                t.style.backgroundColor = "darkred";
-                t.style.color = "white";
-                setTimeout(() => {
-                    t.style.backgroundColor = "#222";
-                    t.style.color = "#ff3333";
-                }, 1000);
-            });
-
-            // On applique la pénalité de temps
-            if (typeof applyPenalty === "function") {
-                applyPenalty();
-            } else {
-                alert("MAUVAISE INCANTATION ! Vous perdez 1 minute !");
+            // Applique la pénalité AUTANT de fois qu'il y a d'erreurs (1 erreur = -1 minute)
+            for (let i = 0; i < nbErreurs; i++) {
+                if (typeof applyPenalty === "function") {
+                    applyPenalty();
+                }
             }
+
+            alert("L'incantation est imparfaite ! Vous avez fait " + nbErreurs + " erreur(s) et perdez " + nbErreurs + " minute(s) !");
+
+            // On remet les listes déroulantes fautives à zéro après un instant pour qu'il puisse retenter
+            setTimeout(() => {
+                if (rep1 !== "SANG") { t1.style.backgroundColor = "#222"; t1.style.color = "#ff3333"; t1.value = ""; }
+                if (rep2 !== "AUBE") { t2.style.backgroundColor = "#222"; t2.style.color = "#ff3333"; t2.value = ""; }
+                if (rep3 !== "COMTE") { t3.style.backgroundColor = "#222"; t3.style.color = "#ff3333"; t3.value = ""; }
+            }, 1500);
         }
     }
 
