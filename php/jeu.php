@@ -131,9 +131,9 @@
         <button class="btn-zoom" onclick="toggleZoom('conteneur-diff')">🔍 Activer/Désactiver la Loupe</button>
 
         <div id="conteneur-diff" class="zoomable" style="display: flex; flex-direction: column; align-items: center;">
-            <div class="diff-img-box"><img src="../img/5_différences_base.jpeg"></div>
+            <div class="diff-img-box"><img src="../img/5_differences_base.jpeg"></div>
             <div id="diff-clickable-zone" class="diff-img-box" onclick="handleDiffClick(event)" style="cursor: crosshair;">
-                <img src="../img/5_différences.jpeg">
+                <img src="../img/5_differences.jpeg">
                 <div id="found-markers"></div>
             </div>
         </div>
@@ -150,7 +150,7 @@
         <h2>Énigme 5 : L'Apparition</h2>
         <button class="btn-zoom" onclick="toggleZoom('img-apparition')">🔍 Activer/Désactiver la Loupe</button>
 
-        <img id="img-apparition" src="../img/observation_comparée.jpeg" class="enigma-img zoomable" alt="Observation">
+        <img id="img-apparition" src="../img/observation_comparee.jpeg" class="enigma-img zoomable" alt="Observation">
         <p>Identifiez l'entité cachée.</p>
         <input type="text" id="ans-5" placeholder="Nommez l'entité" onkeypress="if(event.key === 'Enter') checkAnswer(5, 'FANTOME')">
         <br><button class="btn-action" onclick="checkAnswer(5, 'FANTOME')">Valider</button>
@@ -246,42 +246,22 @@
     // --- FONCTION DE SUIVI EN TEMPS RÉEL ---
     function demarrerSuiviGPS() {
         if ("geolocation" in navigator) {
-            // watchPosition suit le joueur en permanence
-            geoWatchId = navigator.geolocation.watchPosition(
-                function(position) {
-                    userLat = position.coords.latitude;
-                    userLon = position.coords.longitude;
+            navigator.geolocation.watchPosition(position => {
+                userLat = position.coords.latitude;
+                userLon = position.coords.longitude;
 
-                    // 1. Si la carte existe, on met à jour le point bleu
-                    if (map) {
-                        if (!userMarker) {
-                            // Création du point bleu s'il n'existe pas encore
-                            userMarker = L.circleMarker([userLat, userLon], {
-                                color: '#3388ff',
-                                fillColor: '#3388ff',
-                                fillOpacity: 0.8,
-                                radius: 8
-                            }).addTo(map);
-                        } else {
-                            // Le joueur bouge -> le point bleu bouge
-                            userMarker.setLatLng([userLat, userLon]);
-                        }
+                if (map) {
+                    if (!userMarker) {
+                        userMarker = L.circleMarker([userLat, userLon], {
+                            color: '#3388ff', fillColor: '#3388ff', fillOpacity: 0.8, radius: 8
+                        }).addTo(map);
+                    } else {
+                        userMarker.setLatLng([userLat, userLon]);
                     }
-
-                    // 2. On vérifie en permanence s'il est arrivé à l'étape 12
-                    verifierArrivee(userLat, userLon);
-                },
-                function(error) {
-                    console.warn("Signal GPS faible ou refusé : ", error.message);
-                },
-                {
-                    enableHighAccuracy: true, // Force le vrai GPS (pas juste le Wi-Fi)
-                    maximumAge: 0,
-                    timeout: 5000
                 }
-            );
-        } else {
-            alert("Votre téléphone ne supporte pas le GPS.");
+            }, error => {
+                console.error("Erreur GPS:", error);
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
         }
     }
 
@@ -395,14 +375,21 @@
             let loc = enigmasLocations[currentStep];
             map.setView(loc, 17);
             marker = L.marker(loc).addTo(map);
-
             marker.bindPopup("<b>Sceau détecté !</b><br>Cliquez pour examiner.").openPopup();
 
-            // --- AU CLIC : On bascule sur l'énigme ---
             marker.on('click', () => {
-                document.getElementById('radar-container').classList.add('hidden');
-                document.getElementById('game-board').classList.remove('hidden');
-                lancerEnigme(currentStep);
+                if (userLat === null || userLon === null) {
+                    alert("Signal GPS introuvable. Sortez ou activez votre localisation.");
+                    return;
+                }
+
+                let dist = L.latLng(userLat, userLon).distanceTo(L.latLng(loc));
+
+                if (dist <= 10) {
+                    lancerEnigme(currentStep);
+                } else {
+                    alert("Trop loin ! (" + Math.round(dist) + "m). Rapprochez-vous à moins de 10m.");
+                }
             });
         } else {
             window.location.href = "victoire.html";
@@ -1007,6 +994,7 @@
         let radar = document.getElementById('radar-container');
         if (radar) radar.classList.remove('hidden');
     }
+
 </script>
 </body>
 </html>
