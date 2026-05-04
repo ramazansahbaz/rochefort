@@ -240,52 +240,37 @@
 
     // --- FONCTION DE SUIVI EN TEMPS RÉEL ---
     function demarrerSuiviGPS() {
-        if ("geolocation" in navigator) {
-            // watchPosition suit le joueur en permanence
-            geoWatchId = navigator.geolocation.watchPosition(
-                function(position) {
-                    if (position.coords.accuracy > 50) {
-                        console.warn("Signal trop imprécis (" + position.coords.accuracy + "m).");
-                        return; // On ignore si la précision est supérieure à 50 mètres
-                    }
-                    userLat = position.coords.latitude;
-                    userLon = position.coords.longitude;
+        if (navigator.geolocation) {
+            // On utilise watchPosition avec des options de haute précision
+            navigator.geolocation.watchPosition(position => {
+                userLat = position.coords.latitude;
+                userLon = position.coords.longitude;
 
-                    // 1. Si la carte existe, on met à jour le point bleu
-                    if (map) {
-                        if (!userMarker) {
-                            // Création du point bleu s'il n'existe pas encore
-                            userMarker = L.circleMarker([userLat, userLon], {
-                                color: '#3388ff',
-                                fillColor: '#3388ff',
-                                fillOpacity: 0.8,
-                                radius: 8
-                            }).addTo(map);
-                        } else {
-                            // Le joueur bouge -> le point bleu bouge
-                            userMarker.setLatLng([userLat, userLon]);
-                        }
-                    }
-
-                    // 2. On vérifie en permanence s'il est arrivé à l'étape 12
-                    verifierArrivee(userLat, userLon);
-                },
-                function(error) {
-                    console.warn("Signal GPS faible ou refusé : ", error.message);
-                },
-                {
-                    enableHighAccuracy: true, // Force le vrai GPS (pas juste le Wi-Fi)
-                    maximumAge: 0,
-                    timeout: 5000
+                // Mise à jour ou création du marqueur du joueur (le point bleu/icône)
+                if (!userMarker) {
+                    userMarker = L.circleMarker([userLat, userLon], {
+                        radius: 8,
+                        fillColor: "#3388ff",
+                        color: "#fff",
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map);
+                } else {
+                    userMarker.setLatLng([userLat, userLon]);
                 }
-            );
+            }, error => {
+                console.error("Erreur GPS:", error);
+            }, {
+                enableHighAccuracy: true, // INDISPENSABLE pour les 10 mètres
+                maximumAge: 0,
+                timeout: 10000
+            });
         } else {
-            alert("Votre téléphone ne supporte pas le GPS.");
+            alert("La géolocalisation n'est pas supportée par votre navigateur.");
         }
     }
-
-    // On lance le traceur IMMÉDIATEMENT au chargement de la page
-    demarrerSuiviGPS();
+    demarrerSuiviGPS()
 
     // --- VARIABLES GLOBALES ---
     let currentStep = 1;
@@ -388,22 +373,44 @@
     }
 
     function placerMarqueur() {
+        // On retire l'ancien marqueur d'énigme s'il existe
         if (marker) map.removeLayer(marker);
 
+        // Vérification de l'étape actuelle (limite à 12 étapes selon ton code)
         if (currentStep <= 12) {
             let loc = enigmasLocations[currentStep];
-            map.setView(loc, 17);
+            map.setView(loc, 17); // On centre la carte sur l'objectif
+
             marker = L.marker(loc).addTo(map);
+            marker.bindPopup("<b>Sceau détecté !</b><br>Cliquez pour tenter de le briser.").openPopup();
 
-            marker.bindPopup("<b>Sceau détecté !</b><br>Cliquez pour examiner.").openPopup();
-
-            // --- AU CLIC : On bascule sur l'énigme ---
+            // Gestion du clic sur le marqueur
             marker.on('click', () => {
-                document.getElementById('radar-container').classList.add('hidden');
-                document.getElementById('game-board').classList.remove('hidden');
-                lancerEnigme(currentStep);
+                // 1. Vérifier si le GPS a bien renvoyé une position
+                if (userLat === null || userLon === null) {
+                    alert("Signal GPS introuvable. Patientez un instant...");
+                    return;
+                }
+
+                // 2. Calcul de la distance via Leaflet (en mètres)
+                let positionJoueur = L.latLng(userLat, userLon);
+                let positionEnigme = L.latLng(loc[0], loc[1]);
+                let distance = positionJoueur.distanceTo(positionEnigme);
+
+                // 3. Condition de proximité (10 mètres)
+                if (distance <= 20) {
+                    // SUCCÈS : On lance l'énigme
+                    document.getElementById('radar-container').classList.add('hidden');
+                    document.getElementById('game-board').classList.remove('hidden');
+                    lancerEnigme(currentStep);
+                } else {
+                    // ÉCHEC : Trop loin
+                    let distanceArrondie = Math.round(distance);
+                    alert("Vous êtes trop loin du sceau ! (" + distanceArrondie + "m)\nRapprochez-vous à moins de 10m pour interagir.");
+                }
             });
         } else {
+            // Fin du jeu
             window.location.href = "/php/victoire.html";
         }
     }
@@ -520,7 +527,7 @@
             applyPenalty();
             erreursPendu++;
             document.getElementById('mauvaises-lettres').innerText += " " + lettre;
-            document.getElementById('pendu-img').src = "img/pendu_" + erreursPendu + ".png";
+            document.getElementById('pendu-img').src = "../img/pendu_" + erreursPendu + ".png";
             if (erreursPendu >= maxErreurs) {
                 alert("Bûcher allumé ! Le mot change...");
                 initPendu();
@@ -593,7 +600,7 @@
             tile.style.width = '100px'; tile.style.height = '100px';
             tile.style.border = '1px solid #222'; tile.style.cursor = 'pointer';
             if (tileIdx !== 8) {
-                tile.style.backgroundImage = 'url("img/puzzle.jpeg")';
+                tile.style.backgroundImage = 'url("../img/puzzle.jpeg")';
                 tile.style.backgroundSize = '300px 300px';
                 const row = Math.floor(tileIdx / 3);
                 const col = tileIdx % 3;
