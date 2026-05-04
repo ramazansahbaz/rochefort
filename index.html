@@ -461,15 +461,17 @@
     }
 
     function retourAuRadar() {
-        // On cache le plateau d'énigmes
-        document.getElementById('game-board').classList.add('hidden');
+        // 1. On force la disparition du plateau d'énigmes
+        let gameBoard = document.getElementById('game-board');
+        gameBoard.classList.add('hidden');
+        gameBoard.style.display = 'none'; // <-- LA CORRECTION EST LÀ !
 
-        // On affiche le conteneur de la carte
+        // 2. On affiche le conteneur de la carte
         let radar = document.getElementById('radar-container');
         radar.classList.remove('hidden');
         radar.style.display = 'block';
 
-        // LE FIX : On force Leaflet à recalculer la taille de la carte
+        // 3. On force Leaflet à recalculer la taille de la carte
         setTimeout(function() {
             if (map) {
                 map.invalidateSize();
@@ -479,18 +481,27 @@
                 }
             }
         }, 300);
+
+        // 4. On remonte tout en haut pour bien voir la carte
+        window.scrollTo(0, 0);
     }
 
     function enigmeReussie() {
         currentStep++;
 
         if (currentStep === 12) {
-            alert("Le dernier sceau est brisé ! Mais le Comte s'enfuit vers son repaire ! Rattrapez-le !");
-            document.getElementById('game-board').classList.add('hidden');
+            alert("Le dernier sceau est brisé ! Mais le Comte s'enfuit vers son repaire... Rattrapez-le avant qu'il ne disparaisse !");
+
+            // On cache les énigmes et on affiche la carte
             retourAuRadar();
-            // Lance la navigation vers le point 12 avec 5 minutes pour arriver
+
+            // On lance le chrono de 5 minutes pour aller au point 12 (Zone Rouge)
             let loc12 = enigmasLocations[12];
             lancerNavigationChronometree(loc12[0], loc12[1], 5);
+
+            // (On a supprimé la redirection vers la victoire ici, car c'est la fonction
+            // verifierArrivee() qui te donnera la victoire quand tu seras à moins de 50m !)
+
         } else {
             alert("Bonne réponse ! Le sceau est brisé... L'entité se déplace.");
             placerMarqueur();
