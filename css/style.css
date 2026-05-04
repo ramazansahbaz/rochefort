@@ -11,12 +11,24 @@ body {
     color: #e0e0e0;
     line-height: 1.6;
     overflow-x: hidden;
+    cursor: url('../img/citrouille.png'), auto;
+}
+/* On force la citrouille sur les boutons, les liens et les zones cliquables */
+button, a, input, select, .leaflet-interactive, .leaflet-container {
+    cursor: url('../img/citrouille.png'), pointer !important;
 }
 
+/* Pour la carte Leaflet spécifiquement (qui utilise souvent une main) */
+.leaflet-grab {
+    cursor: url('../img/citrouille.png'), move !important;
+}
+
+.leaflet-dragging .leaflet-grab {
+    cursor: url('../img/citrouille.png'), grabbing !important;
+}
 .mode-nuit {
     background-color: #050505;
 }
-
 /* --- ACCUEIL --- */
 .accueil-container {
     display: flex;
@@ -196,8 +208,4 @@ input[type="text"] {
 
 .penalty-flash {
     animation: flash-red 0.5s ease-out;
-}
-
-.hidden {
-    display: none !important;
 }
