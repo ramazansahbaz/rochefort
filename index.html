@@ -240,34 +240,25 @@
 
     // --- FONCTION DE SUIVI EN TEMPS RÉEL ---
     function demarrerSuiviGPS() {
-        if (navigator.geolocation) {
-            // On utilise watchPosition avec des options de haute précision
+        if ("geolocation" in navigator) {
             navigator.geolocation.watchPosition(position => {
                 userLat = position.coords.latitude;
                 userLon = position.coords.longitude;
 
-                // Mise à jour ou création du marqueur du joueur (le point bleu/icône)
-                if (!userMarker) {
-                    userMarker = L.circleMarker([userLat, userLon], {
-                        radius: 8,
-                        fillColor: "#3388ff",
-                        color: "#fff",
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.8
-                    }).addTo(map);
-                } else {
-                    userMarker.setLatLng([userLat, userLon]);
+                if (map) {
+                    if (!userMarker) {
+                        userMarker = L.circleMarker([userLat, userLon], {
+                            color: '#3388ff', fillColor: '#3388ff', fillOpacity: 0.8, radius: 8
+                        }).addTo(map);
+                    } else {
+                        userMarker.setLatLng([userLat, userLon]);
+                    }
+                    // À ajouter dans demarrerSuiviGPS (Partie 1)
+                    verifierArrivee(userLat, userLon);
                 }
             }, error => {
                 console.error("Erreur GPS:", error);
-            }, {
-                enableHighAccuracy: true, // INDISPENSABLE pour les 10 mètres
-                maximumAge: 0,
-                timeout: 10000
-            });
-        } else {
-            alert("La géolocalisation n'est pas supportée par votre navigateur.");
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
         }
     }
     demarrerSuiviGPS()
@@ -321,7 +312,7 @@
             if (timeLeft <= 0) {
                 clearInterval(chronoInterval);
                 alert("LE TEMPS EST ÉCOULÉ ! LE COMTE VOUS A RATTRAPÉ !");
-                location.href = "../index.html";
+                location.href = "index.html";
                 return;
             }
             timeLeft--;
@@ -462,18 +453,12 @@
         currentStep++;
 
         if (currentStep === 12) {
-            // Message de test
-            alert("TEST : Le mot est reconstitué ! Victoire immédiate !");
-
-            // --- ON MET EN COMMENTAIRE LE CODE DE L'ÉTAPE 12 ---
+            alert("Le dernier sceau est brisé ! Mais le Comte s'enfuit vers son repaire ! Rattrapez-le !");
             document.getElementById('game-board').classList.add('hidden');
             retourAuRadar();
+            // Lance la navigation vers le point 12 avec 5 minutes pour arriver
             let loc12 = enigmasLocations[12];
             lancerNavigationChronometree(loc12[0], loc12[1], 5);
-
-            // --- ON FORCE LA VICTOIRE DIRECTEMENT ---
-            window.location.href = "php/victoire.html";
-
         } else {
             alert("Bonne réponse ! Le sceau est brisé... L'entité se déplace.");
             placerMarqueur();
@@ -527,7 +512,7 @@
             applyPenalty();
             erreursPendu++;
             document.getElementById('mauvaises-lettres').innerText += " " + lettre;
-            document.getElementById('pendu-img').src = "../img/pendu_" + erreursPendu + ".png";
+            document.getElementById('pendu-img').src = "img/pendu_" + erreursPendu + ".png";
             if (erreursPendu >= maxErreurs) {
                 alert("Bûcher allumé ! Le mot change...");
                 initPendu();
@@ -600,7 +585,7 @@
             tile.style.width = '100px'; tile.style.height = '100px';
             tile.style.border = '1px solid #222'; tile.style.cursor = 'pointer';
             if (tileIdx !== 8) {
-                tile.style.backgroundImage = 'url("../img/puzzle.jpeg")';
+                tile.style.backgroundImage = 'url("img/puzzle.jpeg")';
                 tile.style.backgroundSize = '300px 300px';
                 const row = Math.floor(tileIdx / 3);
                 const col = tileIdx % 3;
@@ -972,15 +957,16 @@
     // 2. Vérification de la distance
     function verifierArrivee(lat, lon) {
         if (navigationEnCours && cibleLat && cibleLon) {
-            let dist = calculerDistance(lat, lon, cibleLat, cibleLon);
+            // Utilisation de Leaflet pour calculer la distance entre le joueur et la cible
+            let posJoueur = L.latLng(lat, lon);
+            let posCible = L.latLng(cibleLat, cibleLon);
+            let dist = posJoueur.distanceTo(posCible);
 
-            // Si le joueur entre dans le rayon de 50m autour du Château (Zone Rouge)
-            if (dist < 50) {
+            if (dist < 50) { // Rayon de 50 mètres
                 navigationEnCours = false;
-                if (timerDeplacement) clearInterval(timerDeplacement); // On arrête le chrono d'étape
-
-                alert("ZONE ATTEINTE ! Vous avez intercepté le Comte et récupéré le dernier sceau !");
-                window.location.href = "/php/victoire.html";
+                if (timerDeplacement) clearInterval(timerDeplacement);
+                alert("ZONE ATTEINTE ! Vous avez intercepté le Comte avant qu'il ne disparaisse !");
+                window.location.href = "php/victoire.html";
             }
         }
     }
